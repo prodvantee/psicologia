@@ -1,0 +1,139 @@
+index.html 
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Malla Interactiva - Psicología UNSTA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #5a4b81;
+        }
+        .anio {
+            margin-top: 30px;
+        }
+        .anio h2 {
+            color: #6c63ff;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .materia {
+            display: inline-block;
+            padding: 10px 14px;
+            margin: 6px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .pendiente {
+            background: #EBDCF9;
+            color: #333;
+        }
+        .cursando {
+            background: #A7D8F4;
+            color: #333;
+        }
+        .aprobada {
+            background: #B28DFF;
+            color: white;
+        }
+        .bloqueada {
+            background: #E0E0E0;
+            color: #888;
+            cursor: not-allowed;
+        }
+        button {
+            margin: 20px auto;
+            display: block;
+            padding: 10px 15px;
+            background: #6c63ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5a4b81;
+        }
+    </style>
+</head>
+<body>
+    <h1>Malla Interactiva - Psicología UNSTA</h1>
+    <button onclick="reiniciar()">Reiniciar progreso</button>
+
+    <div class="anio">
+        <h2>1° Año</h2>
+        <div class="materia pendiente" data-id="psicologia_general" onclick="cambiarEstado(this)">Psicología General</div>
+        <div class="materia pendiente" data-id="neurociencias_1" onclick="cambiarEstado(this)">Neurociencias I</div>
+        <div class="materia bloqueada" data-id="neurociencias_2" data-correlativas="neurociencias_1" onclick="cambiarEstado(this)">Neurociencias II</div>
+        <div class="materia pendiente" data-id="filosofia" onclick="cambiarEstado(this)">Intro. a la Filosofía</div>
+    </div>
+
+    <div class="anio">
+        <h2>2° Año</h2>
+        <div class="materia bloqueada" data-id="psico_desarrollo" data-correlativas="psicologia_general" onclick="cambiarEstado(this)">Psicología del Desarrollo</div>
+        <div class="materia bloqueada" data-id="psico_social" data-correlativas="psicologia_general" onclick="cambiarEstado(this)">Psicología Social</div>
+    </div>
+
+    <script>
+        const estados = ["pendiente", "cursando", "aprobada"];
+
+        function cambiarEstado(el) {
+            if (el.classList.contains("bloqueada")) return;
+
+            for (let estado of estados) el.classList.remove(estado);
+
+            let actual = localStorage.getItem(el.dataset.id) || "pendiente";
+            let nuevo = estados[(estados.indexOf(actual) + 1) % estados.length];
+
+            el.classList.add(nuevo);
+            localStorage.setItem(el.dataset.id, nuevo);
+            actualizarBloqueos();
+        }
+
+        function actualizarBloqueos() {
+            document.querySelectorAll(".materia").forEach(el => {
+                if (el.dataset.correlativas) {
+                    let reqs = el.dataset.correlativas.split(",");
+                    let cumplidas = reqs.every(id => localStorage.getItem(id) === "aprobada");
+                    if (cumplidas) {
+                        el.classList.remove("bloqueada");
+                        if (!localStorage.getItem(el.dataset.id)) {
+                            el.classList.add("pendiente");
+                        } else {
+                            el.classList.add(localStorage.getItem(el.dataset.id));
+                        }
+                    } else {
+                        for (let estado of estados) el.classList.remove(estado);
+                        el.classList.add("bloqueada");
+                    }
+                } else {
+                    let saved = localStorage.getItem(el.dataset.id);
+                    if (saved) {
+                        for (let estado of estados) el.classList.remove(estado);
+                        el.classList.add(saved);
+                    }
+                }
+            });
+        }
+
+        function reiniciar() {
+            if (confirm("¿Seguro que querés reiniciar tu progreso?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        window.onload = actualizarBloqueos;
+    </script>
+</body>
+</html>
